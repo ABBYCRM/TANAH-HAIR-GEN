@@ -221,7 +221,12 @@ async function callApi(endpoint, renderFn) {
 // Render functions
 // ===========================================================
 function renderSingle(body, ms) {
-  const meta = `Model: ${body.model} · view: ${body.view} · ${(ms/1000).toFixed(1)}s · id: ${body.id}`;
+  // Tolerate missing model/view (e.g. /api/parametric before the server
+  // started echoing them — this keeps the meta line clean even if the
+  // response shape changes).
+  const modelLabel = body.model || 'svg';
+  const viewLabel = body.view || 'front';
+  const meta = `Model: ${modelLabel} · view: ${viewLabel} · ${(ms/1000).toFixed(1)}s · id: ${body.id}`;
   resultMeta.textContent = meta;
   resultMeta.className = 'badge badge-green';
   resultWrap.innerHTML = `<img class="result-image" src="${body.outputDataUrl}" alt="Generated preview"/>`;

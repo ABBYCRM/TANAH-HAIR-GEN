@@ -6,16 +6,13 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, rm } from 'node:fs/promises';
-import os from 'node:os';
-import path from 'node:path';
 import express from 'express';
 import { createServer } from 'node:http';
+import path from 'node:path';
 import { buildApi } from '../app/api.mjs';
 
 async function setup({ apiKey = null } = {}) {
-  // Express app -> router -> HTTP server
-  const dataDir = await mkdtemp(path.join(os.tmpdir(), 'tanah-hair-gen-test-'));
+  // Express app -> router -> HTTP server (binds a random port)
   const app = express();
   app.use(express.json({ limit: '15mb' }));
   app.use(express.urlencoded({ limit: '15mb', extended: true }));
@@ -23,7 +20,7 @@ async function setup({ apiKey = null } = {}) {
   const server = createServer(app);
   await new Promise(r => server.listen(0, '127.0.0.1', r));
   const base = `http://127.0.0.1:${server.address().port}`;
-  async function close() { await new Promise(r => server.close(r)); await rm(dataDir, { recursive: true, force: true }); }
+  async function close() { await new Promise(r => server.close(r)); }
   return { base, close };
 }
 

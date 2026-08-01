@@ -28,7 +28,7 @@ import {
 } from './presets.mjs';
 import { watermarkedImageDataUrl } from './watermark.mjs';
 import { renderParametricSvg } from './parametric.mjs';
-import { hashApiKey, randomId } from './security.mjs';
+import { randomId } from './security.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
@@ -253,6 +253,10 @@ export function buildApi({ apiKey, model = MODEL_DEFAULT, fetchImpl = fetch }) {
       const base64 = Buffer.from(svg).toString('base64');
       res.status(201).json({
         id: randomId(),
+        // Echo model + view so the front-end meta line is consistent
+        // with /api/generate (the UI shows the same fields for both paths).
+        model: 'parametric-svg',
+        view: params.view,
         outputDataUrl: `data:image/svg+xml;base64,${base64}`,
         seed: seed !== undefined ? seed : null,
         params: sanitizeParams(params),
@@ -267,5 +271,3 @@ export function buildApi({ apiKey, model = MODEL_DEFAULT, fetchImpl = fetch }) {
 
   return router;
 }
-
-export { SAMPLE_PHOTO_BASE64, SAMPLE_PHOTO_MIME, MAX_PHOTO_BYTES, ALLOWED_PHOTO_MIME };
