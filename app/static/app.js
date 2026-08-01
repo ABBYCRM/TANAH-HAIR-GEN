@@ -2,6 +2,7 @@
 // TANAH-HAIR-GEN — front-end controller
 // Single-page UI for the focused image-generator microservice.
 // Visual language harmonized with ABBYCRM/CLINICA-TANAH.
+// All user-facing strings flow through window.tanahI18n.t().
 // ============================================================
 
 // --- DOM refs ---
@@ -15,7 +16,7 @@ const photoEmpty   = document.getElementById('photo-empty');
 const resultWrap   = document.getElementById('result-wrap');
 const resultMeta   = document.getElementById('result-meta');
 const status       = document.getElementById('ai-chip');
-const modelChip    = document.getElementById('model-chip');
+const modelName    = document.getElementById('model-name');
 const densityInput = document.getElementById('density');
 const densityValue = document.getElementById('density-value');
 const hamburger    = document.getElementById('hamburger');
@@ -24,14 +25,19 @@ const topnav       = document.getElementById('topnav');
 const fields = ['hairline', 'zone', 'length', 'color', 'curl', 'fullness', 'technique', 'sessions', 'graftScenario'];
 const buttons = form.querySelectorAll('button[data-action]');
 
+// Shortcuts to the i18n module
+const i18n = window.tanahI18n;
+
 // --- State ---
 let photoBase64 = null;
 let photoMime   = null;
 let presets     = null;
 
 // ===========================================================
-// Boot: load presets + health
+// Boot: i18n + presets + health
 // ===========================================================
+window.tanahI18n.init();  // detect locale, apply translations, wire pills
+
 (async function boot() {
   // Wire hamburger
   hamburger.addEventListener('click', () => {
@@ -63,14 +69,20 @@ let presets     = null;
   form.querySelector('[data-action=multi-view]').addEventListener('click', () => callApi('/api/multi-view', renderMultiView));
   form.querySelector('[data-action=parametric]').addEventListener('click', () => callApi('/api/parametric', renderSingle));
 
+  // Re-apply translations when the user switches language (preset options
+  // need to be rebuilt because their visible labels are locale-specific).
+  window.addEventListener('tanah-locale-change', () => {
+    if (presets) populateSelects();
+    refreshStaticMessages();
+  });
+
   // Initial health check
   try {
     const r = await fetch('/api/health');
     const h = await r.json();
     setHealth(h);
   } catch (e) {
-    status.textContent = 'offline';
-    status.className = 'chip chip-rose';
+    setHealth(null);
   }
 
   // Load presets + populate selects
@@ -79,27 +91,44 @@ let presets     = null;
     presets = await r.json();
     populateSelects();
   } catch (e) {
-    showError('Failed to load parameter catalog. Is the service online?');
+    showError(i18n.t('err.noPresets'));
   }
 
   // Default: load sample photo so the user can press Generate immediately
   await loadSamplePhoto();
 })();
 
+// After a locale change, refresh the parts of the UI that hold
+// runtime state (status chips, meta badge, error states).
+function refreshStaticMessages() {
+  if (status.textContent === i18n.t('chip.aiReady') || status.dataset.state === 'ready') {
+    setHealth({ gemini: { configured: true, model: modelName.textContent } });
+  } else if (status.dataset.state === 'offline') {
+    setHealth(null);
+  }
+  if (photoStatus.dataset.state) {
+    setPhotoStatus(photoStatus.dataset.state, photoStatus.dataset.badge);
+  }
+  if (resultMeta.dataset.state === 'error') {
+    showError(resultMeta.dataset.lastError || i18n.t('err.generic'));
+  }
+}
+
 // ===========================================================
 // Health status
 // ===========================================================
 function setHealth(h) {
-  if (h.gemini?.configured) {
-    status.textContent = 'AI ready';
+  if (h && h.gemini && h.gemini.configured) {
+    status.textContent = i18n.t('chip.aiReady');
     status.className = 'chip chip-green';
+    status.dataset.state = 'ready';
   } else {
-    status.textContent = 'offline';
+    status.textContent = i18n.t('chip.offline');
     status.className = 'chip chip-rose';
+    status.dataset.state = 'offline';
   }
-  if (h.gemini?.model) {
-    modelChip.textContent = 'model: ' + h.gemini.model;
-    modelChip.className = 'chip chip-slate';
+  if (h && h.gemini && h.gemini.model) {
+    modelName.textContent = h.gemini.model;
   }
 }
 
@@ -121,10 +150,29 @@ function populateSelects() {
   for (const id of fields) {
     const sel = document.getElementById(id);
     if (!sel || !cats[id]) continue;
-    sel.innerHTML = cats[id].map(o =>
-      `<option value="${escapeAttr(o.id)}">${escapeHtml(o.label)}</option>`
-    ).join('');
+    const current = sel.value;  // preserve selection across locale changes
+    sel.innerHTML = cats[id].map(o => {
+      const label = presetLabel(catKeyFor(id), o.id) || o.label;
+      return `<option value="${escapeAttr(o.id)}">${escapeHtml(label)}</option>`;
+    }).join('');
+    if (current && cats[id].some(o => o.id === current)) sel.value = current;
   }
+}
+
+// Map select id -> preset category key in the i18n table
+function catKeyFor(selectId) {
+  const map = {
+    hairline: 'hairlines',
+    zone: 'zones',
+    length: 'lengths',
+    color: 'colors',
+    curl: 'curls',
+    fullness: 'fullnesses',
+    technique: 'techniques',
+    sessions: 'sessions',
+    graftScenario: 'graftScenarios'
+  };
+  return map[selectId] || selectId;
 }
 
 // ===========================================================
@@ -147,7 +195,7 @@ async function loadSamplePhoto() {
 function handlePhotoSelected(ev) {
   const file = ev.target.files?.[0];
   if (!file) return;
-  if (file.size > 12 * 1024 * 1024) { showError('Photo > 12 MB. Please pick a smaller image.'); return; }
+  if (file.size > 12 * 1024 * 1024) { showError(i18n.t('err.tooLarge')); return; }
   photoMime = file.type || 'image/jpeg';
   const reader = new FileReader();
   reader.onload = () => {
@@ -173,9 +221,11 @@ function showPhoto(b64, mime) {
   photoReset.hidden = false;
 }
 
-function setPhotoStatus(text, badgeClass) {
-  photoStatus.textContent = text;
+function setPhotoStatus(state, badgeClass) {
+  photoStatus.textContent = i18n.t('photo.' + state);
   photoStatus.className = 'badge ' + badgeClass;
+  photoStatus.dataset.state = state;
+  photoStatus.dataset.badge = badgeClass;
 }
 
 // ===========================================================
@@ -193,7 +243,7 @@ function collectParams() {
 }
 
 async function callApi(endpoint, renderFn) {
-  if (!photoBase64) { showError('Upload a photo or use the sample first.'); return; }
+  if (!photoBase64) { showError(i18n.t('err.noPhoto')); return; }
   setBusy(true);
   const t0 = performance.now();
   try {
@@ -204,14 +254,17 @@ async function callApi(endpoint, renderFn) {
     });
     const text = await r.text();
     if (!r.ok) {
-      let err = text;
-      try { err = JSON.parse(text).message || text; } catch {}
-      throw new Error(`HTTP ${r.status}: ${err}`);
+      let detail = text;
+      try {
+        const parsed = JSON.parse(text);
+        detail = parsed.detail || parsed.title || text;
+      } catch {}
+      throw new Error(i18n.t('err.http', { status: r.status, detail: detail.slice(0, 200) }));
     }
     const body = JSON.parse(text);
     renderFn(body, performance.now() - t0);
   } catch (e) {
-    showError(e.message || 'Request failed');
+    showError(e.message || i18n.t('err.generic'));
   } finally {
     setBusy(false);
   }
@@ -221,26 +274,23 @@ async function callApi(endpoint, renderFn) {
 // Render functions
 // ===========================================================
 function renderSingle(body, ms) {
-  // Tolerate missing model/view (e.g. /api/parametric before the server
-  // started echoing them — this keeps the meta line clean even if the
-  // response shape changes).
   const modelLabel = body.model || 'svg';
   const viewLabel = body.view || 'front';
-  const meta = `Model: ${modelLabel} · view: ${viewLabel} · ${(ms/1000).toFixed(1)}s · id: ${body.id}`;
-  resultMeta.textContent = meta;
-  resultMeta.className = 'badge badge-green';
+  const meta = i18n.t('result.modelMeta', { model: modelLabel, view: viewLabel, ms: (ms/1000).toFixed(1), id: body.id });
+  setResultMeta(meta, 'badge-green', null);
   resultWrap.innerHTML = `<img class="result-image" src="${body.outputDataUrl}" alt="Generated preview"/>`;
   // Scroll into view on mobile
   document.getElementById('output-card').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 function renderVariants(body, ms) {
+  const total = (body.variants || []).length;
   const ok = (body.variants || []).filter(v => !v.error).length;
-  resultMeta.textContent = `${ok}/${(body.variants||[]).length} variants · ${(ms/1000).toFixed(1)}s`;
-  resultMeta.className = 'badge badge-green';
+  setResultMeta(i18n.t('result.variantsMeta', { ok, total, ms: (ms/1000).toFixed(1) }), 'badge-green', null);
+  const failedLabel = i18n.t('result.failed');
   const cards = (body.variants || []).map(v => {
     if (v.error) {
-      return `<figure class="variant-card error"><div class="placeholder" style="min-height:160px"><div class="placeholder-icon">!</div><div class="placeholder-text">${escapeHtml(v.error)}</div></div><figcaption><strong>${escapeHtml(v.hairline)}</strong><span>Failed</span></figcaption></figure>`;
+      return `<figure class="variant-card error"><div class="placeholder" style="min-height:160px"><div class="placeholder-icon">!</div><div class="placeholder-text">${escapeHtml(v.error)}</div></div><figcaption><strong>${escapeHtml(v.hairline)}</strong><span>${escapeHtml(failedLabel)}</span></figcaption></figure>`;
     }
     return `<figure class="variant-card"><img src="${v.outputDataUrl}" alt="${escapeHtml(v.hairline)}"/><figcaption><strong>${escapeHtml(v.hairline)}</strong><span>${(ms/1000).toFixed(1)}s</span></figcaption></figure>`;
   }).join('');
@@ -249,12 +299,13 @@ function renderVariants(body, ms) {
 }
 
 function renderMultiView(body, ms) {
+  const total = (body.views || []).length;
   const ok = (body.views || []).filter(v => !v.error).length;
-  resultMeta.textContent = `${ok}/${(body.views||[]).length} views · ${(ms/1000).toFixed(1)}s`;
-  resultMeta.className = 'badge badge-green';
+  setResultMeta(i18n.t('result.multiviewMeta', { ok, total, ms: (ms/1000).toFixed(1) }), 'badge-green', null);
+  const failedLabel = i18n.t('result.failed');
   const cards = (body.views || []).map(v => {
     if (v.error) {
-      return `<figure class="variant-card error"><div class="placeholder" style="min-height:160px"><div class="placeholder-icon">!</div><div class="placeholder-text">${escapeHtml(v.error)}</div></div><figcaption><strong>${escapeHtml((v.view||'').toUpperCase())}</strong><span>Failed</span></figcaption></figure>`;
+      return `<figure class="variant-card error"><div class="placeholder" style="min-height:160px"><div class="placeholder-icon">!</div><div class="placeholder-text">${escapeHtml(v.error)}</div></div><figcaption><strong>${escapeHtml((v.view||'').toUpperCase())}</strong><span>${escapeHtml(failedLabel)}</span></figcaption></figure>`;
     }
     return `<figure class="variant-card"><img src="${v.outputDataUrl}" alt="${escapeHtml(v.view)}"/><figcaption><strong>${escapeHtml((v.view||'').toUpperCase())}</strong><span>${escapeHtml(v.model || 'gemini')}</span></figcaption></figure>`;
   }).join('');
@@ -263,18 +314,23 @@ function renderMultiView(body, ms) {
 }
 
 function showError(msg) {
-  resultMeta.textContent = 'error';
-  resultMeta.className = 'badge badge-red';
+  setResultMeta(i18n.t('result.errorLabel'), 'badge-red', msg);
   resultWrap.innerHTML = `<div class="placeholder" style="border-color: var(--rose-100); background: #fff5f5; color: var(--rose-700);"><div class="placeholder-icon">!</div><div class="placeholder-text">${escapeHtml(msg)}</div></div>`;
+}
+
+function setResultMeta(text, badgeClass, lastError) {
+  resultMeta.textContent = text;
+  resultMeta.className = 'badge ' + badgeClass;
+  resultMeta.dataset.state = badgeClass === 'badge-red' ? 'error' : 'ok';
+  if (lastError) resultMeta.dataset.lastError = lastError;
 }
 
 function setBusy(busy) {
   for (const btn of buttons) btn.disabled = busy;
   for (const btn of [photoReset, useSample]) btn.disabled = busy;
   if (busy) {
-    resultMeta.textContent = 'rendering…';
-    resultMeta.className = 'badge badge-yellow';
-    resultWrap.innerHTML = `<div class="placeholder"><div class="placeholder-icon">⏳</div><div class="placeholder-text">Gemini is analyzing the head shape and rendering the simulation. Typical time: 5–15 seconds.</div></div>`;
+    setResultMeta('…', 'badge-yellow', null);
+    resultWrap.innerHTML = `<div class="placeholder"><div class="placeholder-icon">⏳</div><div class="placeholder-text">${escapeHtml(i18n.t('result.busyTitle'))}</div></div>`;
   }
 }
 

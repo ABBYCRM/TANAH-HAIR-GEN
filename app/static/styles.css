@@ -152,6 +152,42 @@ code, pre { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, 
   flex-shrink: 0;
 }
 
+/* Language switcher (mirrors CLINICA-TANAH Layout.tsx PT/ES/EN pills) */
+.lang-pills {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  background: var(--slate-100);
+  border: 1px solid var(--slate-200);
+  border-radius: var(--r-md);
+}
+.lang-pill {
+  appearance: none;
+  background: transparent;
+  border: none;
+  color: var(--slate-600);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 4px 8px;
+  border-radius: calc(var(--r-md) - 2px);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  min-height: 24px;
+  line-height: 1;
+}
+.lang-pill:hover { color: var(--slate-900); }
+.lang-pill.active {
+  background: var(--clinic-600);
+  color: white;
+}
+.lang-pill:focus-visible {
+  outline: 2px solid var(--clinic-500);
+  outline-offset: 1px;
+}
+
 .chip {
   display: inline-flex;
   align-items: center;
@@ -687,6 +723,9 @@ select.input {
 
   .chip { padding: 3px 8px; font-size: 10px; }
   .topbar-right .chip:not(:last-of-type) { display: none; }
+
+  .lang-pills { padding: 1px; }
+  .lang-pill { padding: 3px 6px; font-size: 10px; min-height: 22px; }
 
   .hamburger { display: flex; }
 
