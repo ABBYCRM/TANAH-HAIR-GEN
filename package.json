@@ -1,0 +1,19 @@
+{
+  "name": "tanah-hair-gen",
+  "version": "1.0.0",
+  "description": "Hair-transplant image generator service. AI-powered photorealistic before/after visualization. Embeddable component for CRMs.",
+  "private": true,
+  "type": "module",
+  "main": "app/server.mjs",
+  "scripts": {
+    "start": "node app/server.mjs",
+    "test": "node --test tests/*.test.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "multer": "^1.4.5-lts.1"
+  }
+}

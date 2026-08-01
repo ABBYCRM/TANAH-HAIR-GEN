@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TANAH-HAIR-GEN · Hair Transplant Image Generator</title>
+<meta name="description" content="Hair-transplant image generator. AI-powered photorealistic before/after visualization. Embeddable component for CRMs.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%2310B981'/%3E%3Ctext x='32' y='42' text-anchor='middle' font-family='system-ui' font-size='28' font-weight='700' fill='%23fff'%3ETH%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark">TH</span>
+    <div>
+      <h1>TANAH-HAIR-GEN</h1>
+      <p>Hair-transplant image generator · embeddable CRM component</p>
+    </div>
+  </div>
+  <div class="topbar-status">
+    <span id="model-chip" class="chip muted">Loading…</span>
+    <span id="ai-chip" class="chip">…</span>
+  </div>
+</header>
+
+<main class="layout">
+
+  <section class="panel source">
+    <header>
+      <p class="eyebrow">INPUT</p>
+      <h2>Patient photo</h2>
+    </header>
+    <div class="photo-wrap">
+      <img id="before" alt="Patient before" src="/api/sample-photo">
+      <div class="photo-actions">
+        <label class="btn-secondary">
+          <input id="photo-input" type="file" accept="image/jpeg,image/png,image/webp" hidden>
+          Upload photo
+        </label>
+        <button class="btn-ghost" id="photo-reset" type="button">Use sample</button>
+      </div>
+    </div>
+    <p class="muted">Demo patient (Shutterstock, no real patient data). Upload your own to test with a real photo.</p>
+  </section>
+
+  <section class="panel controls">
+    <header>
+      <p class="eyebrow">PARAMETERS</p>
+      <h2>Configure the simulation</h2>
+    </header>
+    <form id="gen-form" autocomplete="off">
+      <div class="grid-2">
+        <label>Hairline
+          <select name="hairline">
+            <option value="conservative">Mature conservative</option>
+            <option value="balanced" selected>Balanced natural</option>
+            <option value="restorative">Restorative youthful</option>
+            <option value="feminine">Feminine rounded</option>
+          </select>
+        </label>
+        <label>Zone
+          <select name="zone">
+            <option value="frontal">Frontal band</option>
+            <option value="midscalp">Frontal + mid-scalp</option>
+            <option value="crown">Frontal + crown</option>
+            <option value="full" selected>Full scalp</option>
+            <option value="temples">Temples + frontal</option>
+          </select>
+        </label>
+        <label>Density
+          <input type="range" name="density" min="0" max="1" step="0.05" value="0.7">
+          <small>Visual hair count (no clinical graft estimate).</small>
+        </label>
+        <label>Length
+          <select name="length">
+            <option value="buzz">Buzz (3 mm)</option>
+            <option value="short" selected>Short (15 mm)</option>
+            <option value="medium">Medium (40 mm)</option>
+            <option value="long">Long (80 mm)</option>
+          </select>
+        </label>
+        <label>Color
+          <select name="color">
+            <option value="black">Black</option>
+            <option value="darkBrown" selected>Dark brown</option>
+            <option value="mediumBrown">Medium brown</option>
+            <option value="lightBrown">Light brown</option>
+            <option value="blonde">Blonde</option>
+            <option value="saltPepper">Salt &amp; pepper</option>
+          </select>
+        </label>
+        <label>Curl / texture
+          <select name="curl">
+            <option value="straight" selected>Straight</option>
+            <option value="slight">Slight wave</option>
+            <option value="wavy">Wavy</option>
+            <option value="curly">Curly / coily</option>
+          </select>
+        </label>
+        <label>Fullness
+          <select name="fullness">
+            <option value="conservative">Conservative</option>
+            <option value="moderate" selected>Moderate</option>
+            <option value="fuller">Fuller density</option>
+          </select>
+        </label>
+        <label>Technique
+          <select name="technique">
+            <option value="fue" selected>FUE</option>
+            <option value="fut">FUT</option>
+            <option value="dhi">DHI</option>
+          </select>
+        </label>
+        <label>Sessions
+          <select name="sessions">
+            <option value="single" selected>Single</option>
+            <option value="multi">Multi-session</option>
+          </select>
+        </label>
+        <label>Graft scenario
+          <select name="graftScenario">
+            <option value="light">Light (1.2–1.8k)</option>
+            <option value="moderate" selected>Moderate (1.8–2.5k)</option>
+            <option value="restorative">Restorative (2.5–3.4k)</option>
+            <option value="extensive">Extensive 3.4k+ (multi)</option>
+          </select>
+        </label>
+      </div>
+      <div class="button-row">
+        <button class="btn-primary" type="submit" data-action="generate">Generate (AI)</button>
+        <button class="btn-secondary" type="button" data-action="variants">3 alternatives</button>
+        <button class="btn-secondary" type="button" data-action="multi-view">4 views</button>
+        <button class="btn-ghost" type="button" data-action="parametric">Offline (SVG)</button>
+      </div>
+      <p id="status" class="status" role="status" aria-live="polite"></p>
+    </form>
+  </section>
+
+  <section class="panel result">
+    <header>
+      <p class="eyebrow">OUTPUT</p>
+      <h2>Result</h2>
+    </header>
+    <div class="result-wrap" id="result-wrap">
+      <div class="placeholder">
+        <span>✦</span>
+        <p>Press <strong>Generate (AI)</strong> to render a photorealistic before/after preview. Or try the offline SVG fallback while you wait for a key.</p>
+      </div>
+    </div>
+    <p class="muted" id="result-meta"></p>
+  </section>
+
+</main>
+
+<aside class="api-doc">
+  <h2>API for CRM integrators</h2>
+  <p>POST a photo + parameters. Get back a watermarked image data URL. All endpoints accept JSON or <code>multipart/form-data</code>.</p>
+  <pre><code>curl -X POST https://gen.example.com/api/generate \
+  -F "photo=@patient.jpg" \
+  -F "hairline=balanced" \
+  -F "zone=full" \
+  -F "length=short" \
+  -F "color=darkBrown" \
+  -F "curl=straight" \
+  -F "fullness=moderate" \
+  -F "technique=fue" \
+  -F "sessions=single"</code></pre>
+  <p>Endpoints: <code>GET /api/health</code>, <code>GET /api/presets</code>, <code>POST /api/generate</code>, <code>POST /api/variants</code>, <code>POST /api/multi-view</code>, <code>POST /api/parametric</code>.</p>
+  <p>Every response carries the spec-mandated watermark. The AI preserves identity, skin, age, head shape, lighting, and background; only the scalp hair changes.</p>
+</aside>
+
+<script src="/app.js" defer></script>
+</body>
+</html>
