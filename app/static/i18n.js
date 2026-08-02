@@ -13,6 +13,7 @@ const I18N = {
   // ---- English ----
   en: {
     'meta.title': 'TANAH-HAIR-GEN · Hair Transplant Image Generator',
+    'lang.label': 'Language',
     'meta.description': 'Hair-transplant image generator microservice. AI-powered photorealistic before/after visualization. Embeddable CRM component.',
     'aria.toggleMenu': 'Toggle menu',
     'brand.tag': 'Hair-transplant image generator · embeddable CRM component',
@@ -145,6 +146,7 @@ const I18N = {
   // ---- Portuguese (Brazilian) ----
   'pt-BR': {
     'meta.title': 'TANAH-HAIR-GEN · Gerador de Imagem de Transplante Capilar',
+    'lang.label': 'Idioma',
     'meta.description': 'Microsserviço gerador de imagem de transplante capilar. Visualização fotorrealista antes/depois com IA. Componente CRM embarcável.',
     'aria.toggleMenu': 'Alternar menu',
     'brand.tag': 'Gerador de imagem de transplante capilar · componente CRM embarcável',
@@ -277,6 +279,7 @@ const I18N = {
   // ---- Spanish ----
   es: {
     'meta.title': 'TANAH-HAIR-GEN · Generador de Imágenes de Trasplante Capilar',
+    'lang.label': 'Idioma',
     'meta.description': 'Microservicio generador de imágenes de trasplante capilar. Visualización fotorrealista antes/después con IA. Componente CRM integrable.',
     'aria.toggleMenu': 'Alternar menú',
     'brand.tag': 'Generador de imágenes de trasplante capilar · componente CRM integrable',

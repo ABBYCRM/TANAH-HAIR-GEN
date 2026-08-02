@@ -29,11 +29,15 @@
         <span class="chip chip-slate" id="model-chip" data-i18n-attr="title" data-i18n="chip.modelTitle" title="Active Gemini model"><span data-i18n="chip.model">model:</span> <span id="model-name">—</span></span>
         <span class="chip chip-slate" id="ai-chip" data-i18n="chip.checking">checking…</span>
 
-        <!-- Language switcher (mirrors CLINICA-TANAH Layout.tsx PT/ES/EN pills) -->
-        <div class="lang-pills" role="group" aria-label="Language">
-          <button class="lang-pill" data-lang="en" type="button">EN</button>
-          <button class="lang-pill" data-lang="pt-BR" type="button">PT</button>
-          <button class="lang-pill" data-lang="es" type="button">ES</button>
+        <!-- Language switcher (mirrors CLINICA-TANAH Layout.tsx PT/ES/EN pills + "Language" label) -->
+        <div class="lang-switcher" role="group" aria-label="Language">
+          <span class="lang-label" aria-hidden="true">🌐</span>
+          <span class="lang-text" data-i18n="lang.label">Language</span>
+          <div class="lang-pills">
+            <button class="lang-pill" data-lang="en" type="button">EN</button>
+            <button class="lang-pill" data-lang="pt-BR" type="button">PT</button>
+            <button class="lang-pill" data-lang="es" type="button">ES</button>
+          </div>
         </div>
 
         <button class="hamburger" id="hamburger" aria-label="Toggle menu" aria-expanded="false" data-i18n-attr="aria-label" data-i18n="aria.toggleMenu">
