@@ -1,14 +1,16 @@
 // Tests for the hair-transplant image generator API.
 // Run with: npm test
-// All tests run against the real Gemini API if GEMINI_TEST_KEY is set;
-// otherwise they skip the live AI tests but still verify the offline
-// parametric path, the API surface, and the spec-mandated watermark.
+// The live AI tests require both GEMINI_TEST_KEY (Gemini API key) and
+// GEMINI_TEST_PHOTO (path to a real JPEG/PNG/WebP file). If either is
+// missing, the live tests skip but the offline parametric path + the API
+// surface + the spec-mandated watermark + the no-photo error contract
+// are all still verified.
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import express from 'express';
 import { createServer } from 'node:http';
-import path from 'node:path';
 import { buildApi } from '../app/api.mjs';
 
 async function setup({ apiKey = null } = {}) {
@@ -22,6 +24,22 @@ async function setup({ apiKey = null } = {}) {
   const base = `http://127.0.0.1:${server.address().port}`;
   async function close() { await new Promise(r => server.close(r)); }
   return { base, close };
+}
+
+// Read the test photo once. Used by every live test below.
+let testPhotoB64 = null;
+let testPhotoMime = 'image/jpeg';
+async function loadTestPhoto() {
+  if (testPhotoB64) return { b64: testPhotoB64, mime: testPhotoMime };
+  if (!process.env.GEMINI_TEST_PHOTO) return null;
+  const buf = await readFile(process.env.GEMINI_TEST_PHOTO);
+  testPhotoB64 = buf.toString('base64');
+  // Infer MIME from extension
+  const ext = process.env.GEMINI_TEST_PHOTO.split('.').pop().toLowerCase();
+  if (ext === 'png') testPhotoMime = 'image/png';
+  else if (ext === 'webp') testPhotoMime = 'image/webp';
+  else testPhotoMime = 'image/jpeg';
+  return { b64: testPhotoB64, mime: testPhotoMime };
 }
 
 test('GET /api/health returns service + Gemini status', async () => {
@@ -63,21 +81,17 @@ test('GET /api/presets returns the full parameter catalog', async () => {
   } finally { await app.close(); }
 });
 
-test('GET /api/sample-photo returns the bundled WebP', async () => {
-  const app = await setup();
-  try {
-    const r = await fetch(`${app.base}/api/sample-photo`);
-    assert.equal(r.status, 200);
-    assert.match(r.headers.get('content-type') || '', /image\/webp/);
-    const buf = Buffer.from(await r.arrayBuffer());
-    assert.ok(buf.length > 1000, 'sample photo should be a real image, not a stub');
-  } finally { await app.close(); }
-});
-
 test('POST /api/parametric returns a watermarked SVG without needing Gemini', async () => {
   const app = await setup();
   try {
+    // The parametric endpoint requires a photo (any photo — even a 1px png).
+    // We supply a minimal 1×1 transparent PNG as a stand-in.
+    const tinyPng = Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+      'base64'
+    );
     const fd = new FormData();
+    fd.append('photo', new Blob([tinyPng], { type: 'image/png' }), 'pixel.png');
     fd.append('hairline', 'balanced');
     fd.append('zone', 'full');
     fd.append('length', 'short');
@@ -99,10 +113,39 @@ test('POST /api/parametric returns a watermarked SVG without needing Gemini', as
   } finally { await app.close(); }
 });
 
-test('POST /api/generate returns 503 when Gemini is not configured', async () => {
+test('POST /api/generate returns 400 when no photo is provided (no demo fallback)', async () => {
   const app = await setup();
   try {
+    // JSON body with no photoBase64
+    const r1 = await fetch(`${app.base}/api/generate`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ params: { hairline: 'balanced' } })
+    });
+    assert.equal(r1.status, 400);
+    const body1 = await r1.json();
+    assert.match(body1.detail, /photoBase64/i);
+
+    // Multipart body with no file
     const fd = new FormData();
+    fd.append('hairline', 'balanced');
+    const r2 = await fetch(`${app.base}/api/generate`, { method: 'POST', body: fd });
+    assert.equal(r2.status, 400);
+    const body2 = await r2.json();
+    assert.match(body2.detail, /photo/i);
+  } finally { await app.close(); }
+});
+
+test('POST /api/generate returns 503 when Gemini is not configured', async () => {
+  const app = await setup();  // no apiKey → Gemini not configured
+  try {
+    // Use a minimal 1×1 transparent PNG as a stand-in photo
+    const tinyPng = Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+      'base64'
+    );
+    const fd = new FormData();
+    fd.append('photo', new Blob([tinyPng], { type: 'image/png' }), 'pixel.png');
     fd.append('hairline', 'balanced');
     fd.append('zone', 'full');
     fd.append('length', 'short');
@@ -132,17 +175,18 @@ test('POST /api/generate with a real Gemini key returns a watermarked image (liv
     t.skip('set GEMINI_TEST_KEY to run the live AI test');
     return;
   }
+  const photo = await loadTestPhoto();
+  if (!photo) {
+    t.skip('set GEMINI_TEST_PHOTO=/path/to/photo.jpg to run the live AI test');
+    return;
+  }
   const app = await setup({ apiKey: process.env.GEMINI_TEST_KEY });
   try {
-    const sampleBuf = await (await import('node:fs/promises')).readFile(
-      path.resolve(process.cwd(), 'app/assets/sample-patient.webp')
-    );
-    const sampleB64 = sampleBuf.toString('base64');
     const r = await fetch(`${app.base}/api/generate`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
-        photoBase64: sampleB64, photoMime: 'image/webp',
+        photoBase64: photo.b64, photoMime: photo.mime,
         params: { hairline: 'balanced', zone: 'full', length: 'short', color: 'darkBrown', curl: 'straight', fullness: 'moderate', technique: 'fue', sessions: 'single' }
       })
     });
@@ -168,17 +212,18 @@ test('POST /api/variants with a real Gemini key returns 3 watermarked images (li
     t.skip('set GEMINI_TEST_KEY to run the live AI test');
     return;
   }
+  const photo = await loadTestPhoto();
+  if (!photo) {
+    t.skip('set GEMINI_TEST_PHOTO=/path/to/photo.jpg to run the live AI test');
+    return;
+  }
   const app = await setup({ apiKey: process.env.GEMINI_TEST_KEY });
   try {
-    const sampleBuf = await (await import('node:fs/promises')).readFile(
-      path.resolve(process.cwd(), 'app/assets/sample-patient.webp')
-    );
-    const sampleB64 = sampleBuf.toString('base64');
     const r = await fetch(`${app.base}/api/variants`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
-        photoBase64: sampleB64, photoMime: 'image/webp',
+        photoBase64: photo.b64, photoMime: photo.mime,
         params: { zone: 'full', length: 'short', color: 'darkBrown', curl: 'straight', fullness: 'moderate', technique: 'fue', sessions: 'single' }
       })
     });

@@ -14,7 +14,6 @@
 
 import express from 'express';
 import multer from 'multer';
-import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
@@ -32,7 +31,6 @@ import { randomId } from './security.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
-const assetRoot = path.resolve(__dirname, 'assets');
 const publicRoot = path.resolve(__dirname, 'static');
 
 const MAX_PHOTO_BYTES = 12 * 1024 * 1024;  // 12 MB
@@ -46,23 +44,10 @@ function sendProblem(res, status, code, title, detail) {
   });
 }
 
-// Load the bundled sample photo once at boot, base64-encode it, and
-// reuse it for requests that don't include their own photo.
-let SAMPLE_PHOTO_BASE64 = null;
-let SAMPLE_PHOTO_MIME = 'image/webp';
-async function loadSamplePhoto() {
-  try {
-    const buf = await readFile(path.join(assetRoot, 'sample-patient.webp'));
-    SAMPLE_PHOTO_BASE64 = buf.toString('base64');
-    SAMPLE_PHOTO_MIME = 'image/webp';
-  } catch {
-    SAMPLE_PHOTO_BASE64 = null;
-  }
-}
-loadSamplePhoto();
-
-// Pull the photo + parameters from a request, regardless of whether
-// the caller used JSON (base64 photo) or multipart (file upload).
+// Pull the photo + parameters from a request. The caller MUST provide
+// a photo — either as a multipart file or as base64 in JSON. There is
+// no default/demo photo anymore; the CRM is expected to upload a real
+// patient photo.
 async function extractInputs(req) {
   if (req.is('multipart/form-data') || req.is('application/x-www-form-urlencoded')) {
     const photo = req.file;
@@ -81,11 +66,9 @@ async function extractInputs(req) {
         params: sanitizeParams(req.body || {})
       };
     }
-    return {
-      photoBase64: SAMPLE_PHOTO_BASE64,
-      photoMime: SAMPLE_PHOTO_MIME,
-      params: sanitizeParams(req.body || {})
-    };
+    // multipart with no file → 400, the caller forgot the photo
+    const err = new Error('No photo provided. Multipart upload must include a "photo" file field.');
+    err.status = 400; throw err;
   }
   const body = req.body || {};
   if (body.photoBase64) {
@@ -95,11 +78,9 @@ async function extractInputs(req) {
       params: sanitizeParams(body.params || body)
     };
   }
-  return {
-    photoBase64: SAMPLE_PHOTO_BASE64,
-    photoMime: SAMPLE_PHOTO_MIME,
-    params: sanitizeParams(body.params || body)
-  };
+  // JSON body without a photo → 400
+  const err = new Error('No photo provided. JSON body must include "photoBase64" (and optionally "photoMime").');
+  err.status = 400; throw err;
 }
 
 export function buildApi({ apiKey, model = MODEL_DEFAULT, fetchImpl = fetch }) {
@@ -119,18 +100,6 @@ export function buildApi({ apiKey, model = MODEL_DEFAULT, fetchImpl = fetch }) {
         available: GEMINI_MODELS
       }
     });
-  });
-
-  // ---- Bundled sample photo (used by the test UI's default "before" image) ----
-  router.get('/sample-photo', async (_req, res) => {
-    try {
-      const buf = await readFile(path.join(assetRoot, 'sample-patient.webp'));
-      res.writeHead(200, { 'content-type': 'image/webp', 'cache-control': 'public, max-age=300' });
-      res.end(buf);
-    } catch (error) {
-      if (error.code === 'ENOENT') return sendProblem(res, 404, 'SAMPLE_NOT_FOUND', 'Sample photo missing', 'The bundled sample photo is not present in the build.');
-      throw error;
-    }
   });
 
   // ---- Presets catalog ----

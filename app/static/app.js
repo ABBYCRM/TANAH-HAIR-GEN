@@ -9,7 +9,6 @@
 const form         = document.getElementById('gen-form');
 const photoInput   = document.getElementById('photo-input');
 const photoReset   = document.getElementById('photo-reset');
-const useSample    = document.getElementById('use-sample');
 const photoStatus  = document.getElementById('photo-status');
 const before       = document.getElementById('before');
 const photoEmpty   = document.getElementById('photo-empty');
@@ -60,7 +59,6 @@ window.tanahI18n.init();  // detect locale, apply translations, wire pills
 
   // Wire photo controls
   photoInput.addEventListener('change', handlePhotoSelected);
-  useSample.addEventListener('click', loadSamplePhoto);
   photoReset.addEventListener('click', clearPhoto);
 
   // Wire action buttons
@@ -94,8 +92,7 @@ window.tanahI18n.init();  // detect locale, apply translations, wire pills
     showError(i18n.t('err.noPresets'));
   }
 
-  // Default: load sample photo so the user can press Generate immediately
-  await loadSamplePhoto();
+  // No default photo — the user must upload one to render.
 })();
 
 // After a locale change, refresh the parts of the UI that hold
@@ -178,20 +175,6 @@ function catKeyFor(selectId) {
 // ===========================================================
 // Photo handling
 // ===========================================================
-async function loadSamplePhoto() {
-  try {
-    const r = await fetch('/api/sample-photo');
-    if (!r.ok) throw new Error(`HTTP ${r.status}`);
-    const blob = await r.blob();
-    photoMime = blob.type || 'image/webp';
-    photoBase64 = await blobToBase64(blob);
-    showPhoto(photoBase64, photoMime);
-    setPhotoStatus('sample', 'badge-blue');
-  } catch (e) {
-    setPhotoStatus('noPhoto', 'badge-slate');
-  }
-}
-
 function handlePhotoSelected(ev) {
   const file = ev.target.files?.[0];
   if (!file) return;
@@ -331,7 +314,7 @@ function setResultMeta(text, badgeClass, lastError) {
 
 function setBusy(busy) {
   for (const btn of buttons) btn.disabled = busy;
-  for (const btn of [photoReset, useSample]) btn.disabled = busy;
+  for (const btn of [photoReset]) btn.disabled = busy;
   if (busy) {
     setResultMeta('…', 'badge-yellow', null);
     resultWrap.innerHTML = `<div class="placeholder"><div class="placeholder-icon">⏳</div><div class="placeholder-text">${escapeHtml(i18n.t('result.busyTitle'))}</div></div>`;
@@ -341,14 +324,6 @@ function setBusy(busy) {
 // ===========================================================
 // Helpers
 // ===========================================================
-function blobToBase64(blob) {
-  return new Promise((resolve, reject) => {
-    const r = new FileReader();
-    r.onload = () => resolve(String(r.result).split(',')[1]);
-    r.onerror = reject;
-    r.readAsDataURL(blob);
-  });
-}
 function escapeHtml(s) {
   return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
