@@ -14,7 +14,7 @@
 
 import express from 'express';
 import multer from 'multer';
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {

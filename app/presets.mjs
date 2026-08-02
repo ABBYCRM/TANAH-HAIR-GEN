@@ -73,8 +73,3 @@ export const VIEW_CATALOG = [
   { id: 'crown',  label: 'Crown (donor)', description: 'Donor-area reference at the back of the head.' },
   { id: 'back',   label: 'Posterior',     description: 'Back-of-head reference for donor density.' }
 ];
-
-// Pick the first valid value for a given key, falling back to a safe default.
-export function pickPreset(map, key, fallback) {
-  return (map[key] ? key : (fallback || Object.keys(map)[0]));
-}

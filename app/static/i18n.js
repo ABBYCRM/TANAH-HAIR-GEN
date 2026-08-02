@@ -41,6 +41,7 @@ const I18N = {
     'photo.useSample': 'Use sample',
     'photo.clear': 'Clear',
     'photo.demoHint': 'Demo patient is a stock photo (no real patient data). Upload your own to test with a real face.',
+    'photo.altBefore': 'Patient before',
     'param.hairline': 'Hairline',
     'param.zone': 'Zone',
     'param.density': 'Density',
@@ -57,6 +58,7 @@ const I18N = {
     'action.multiview': '4 views',
     'action.offline': 'Offline (SVG)',
     'result.noRender': 'no render yet',
+    'result.altPreview': 'Generated preview',
     'result.placeholderTitle1': 'Press',
     'result.placeholderTitle2': 'Generate (AI)',
     'result.placeholderTitle3': 'to render a photorealistic before/after preview.',
@@ -69,7 +71,7 @@ const I18N = {
     'result.variantsMeta': '{ok}/{total} variants · {ms}s',
     'result.multiviewMeta': '{ok}/{total} views · {ms}s',
     'result.failed': 'Failed',
-    'api.description': 'POST a photo + parameters. Get back a watermarked image data URL. All endpoints accept JSON or <code>multipart/form-data</code>. Every response carries the spec-mandated watermark. The AI preserves identity, skin, age, head shape, lighting, and background — only the scalp hair changes.',
+    'api.description': 'POST a photo + parameters. Get back a watermarked image data URL. All endpoints accept JSON or multipart/form-data. Every response carries the spec-mandated watermark. The AI preserves identity, skin, age, head shape, lighting, and background — only the scalp hair changes.',
     'footer.brand': 'TANAH-HAIR-GEN · single-purpose image generator',
     'footer.github': 'github',
     'err.noPhoto': 'Upload a photo or use the sample first.',
@@ -129,6 +131,14 @@ const I18N = {
       moderate: 'Moderate',
       restorative: 'Restorative',
       extensive: 'Extensive (multi-session)'
+    },
+    'preset.views': {
+      front: 'Frontal',
+      top:   'Top (vertex)',
+      left:  'Left lateral',
+      right: 'Right lateral',
+      crown: 'Crown (donor)',
+      back:  'Posterior'
     }
   },
 
@@ -163,6 +173,7 @@ const I18N = {
     'photo.useSample': 'Usar exemplo',
     'photo.clear': 'Limpar',
     'photo.demoHint': 'Paciente de demonstração é uma foto de banco de imagens (sem dados reais de paciente). Envie a sua para testar com um rosto real.',
+    'photo.altBefore': 'Paciente antes',
     'param.hairline': 'Linha frontal',
     'param.zone': 'Zona',
     'param.density': 'Densidade',
@@ -179,6 +190,7 @@ const I18N = {
     'action.multiview': '4 vistas',
     'action.offline': 'Offline (SVG)',
     'result.noRender': 'sem renderização',
+    'result.altPreview': 'Pré-visualização gerada',
     'result.placeholderTitle1': 'Pressione',
     'result.placeholderTitle2': 'Gerar (IA)',
     'result.placeholderTitle3': 'para renderizar uma pré-visualização fotorrealista antes/depois.',
@@ -191,7 +203,7 @@ const I18N = {
     'result.variantsMeta': '{ok}/{total} alternativas · {ms}s',
     'result.multiviewMeta': '{ok}/{total} vistas · {ms}s',
     'result.failed': 'Falhou',
-    'api.description': 'Envie uma foto + parâmetros. Receba de volta um data URL de imagem com marca d\'água. Todos os endpoints aceitam JSON ou <code>multipart/form-data</code>. Toda resposta carrega a marca d\'água obrigatória da especificação. A IA preserva identidade, pele, idade, formato da cabeça, iluminação e fundo — apenas o cabelo do couro cabeludo muda.',
+    'api.description': 'Envie uma foto + parâmetros. Receba de volta um data URL de imagem com marca d\'água. Todos os endpoints aceitam JSON ou multipart/form-data. Toda resposta carrega a marca d\'água obrigatória da especificação. A IA preserva identidade, pele, idade, formato da cabeça, iluminação e fundo — apenas o cabelo do couro cabeludo muda.',
     'footer.brand': 'TANAH-HAIR-GEN · gerador de imagem de propósito único',
     'footer.github': 'github',
     'err.noPhoto': 'Envie uma foto ou use o exemplo primeiro.',
@@ -251,6 +263,14 @@ const I18N = {
       moderate: 'Moderado',
       restorative: 'Restaurador',
       extensive: 'Extensivo (multi-sessão)'
+    },
+    'preset.views': {
+      front: 'Frontal',
+      top:   'Topo (vértex)',
+      left:  'Lateral esquerda',
+      right: 'Lateral direita',
+      crown: 'Coroa (doador)',
+      back:  'Posterior'
     }
   },
 
@@ -285,6 +305,7 @@ const I18N = {
     'photo.useSample': 'Usar ejemplo',
     'photo.clear': 'Limpiar',
     'photo.demoHint': 'El paciente de demostración es una foto de banco de imágenes (sin datos reales de paciente). Cargue la suya para probar con un rostro real.',
+    'photo.altBefore': 'Paciente antes',
     'param.hairline': 'Línea frontal',
     'param.zone': 'Zona',
     'param.density': 'Densidad',
@@ -301,6 +322,7 @@ const I18N = {
     'action.multiview': '4 vistas',
     'action.offline': 'Sin conexión (SVG)',
     'result.noRender': 'sin renderizar',
+    'result.altPreview': 'Vista previa generada',
     'result.placeholderTitle1': 'Pulse',
     'result.placeholderTitle2': 'Generar (IA)',
     'result.placeholderTitle3': 'para obtener una vista previa fotorrealista antes/después.',
@@ -313,7 +335,7 @@ const I18N = {
     'result.variantsMeta': '{ok}/{total} alternativas · {ms}s',
     'result.multiviewMeta': '{ok}/{total} vistas · {ms}s',
     'result.failed': 'Falló',
-    'api.description': 'Envíe una foto + parámetros. Reciba un data URL de imagen con marca de agua. Todos los endpoints aceptan JSON o <code>multipart/form-data</code>. Cada respuesta lleva la marca de agua obligatoria de la especificación. La IA preserva identidad, piel, edad, forma de la cabeza, iluminación y fondo — solo cambia el cabello del cuero cabelludo.',
+    'api.description': 'Envíe una foto + parámetros. Reciba un data URL de imagen con marca de agua. Todos los endpoints aceptan JSON o multipart/form-data. Cada respuesta lleva la marca de agua obligatoria de la especificación. La IA preserva identidad, piel, edad, forma de la cabeza, iluminación y fondo — solo cambia el cabello del cuero cabelludo.',
     'footer.brand': 'TANAH-HAIR-GEN · generador de imágenes de propósito único',
     'footer.github': 'github',
     'err.noPhoto': 'Cargue una foto o use el ejemplo primero.',
@@ -373,6 +395,14 @@ const I18N = {
       moderate: 'Moderado',
       restorative: 'Restaurador',
       extensive: 'Extensivo (múltiples sesiones)'
+    },
+    'preset.views': {
+      front: 'Frontal',
+      top:   'Top (vértice)',
+      left:  'Lateral izquierdo',
+      right: 'Lateral derecho',
+      crown: 'Coronilla (donante)',
+      back:  'Posterior'
     }
   }
 };

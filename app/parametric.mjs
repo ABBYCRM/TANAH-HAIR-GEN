@@ -86,7 +86,6 @@ function strandPath(x, y, len, dir, rng) {
   const rad = dir;
   const dx = Math.cos(rad), dy = Math.sin(rad);
   const tipX = x + dx * len, tipY = y + dy * len;
-  const perpX = -dy, perpY = dx;
   const midX = (x + tipX) / 2 + (rng() - 0.5) * 2;
   const midY = (y + tipY) / 2 + (rng() - 0.5) * 2;
   return `M ${x.toFixed(2)} ${y.toFixed(2)} Q ${midX.toFixed(2)} ${midY.toFixed(2)} ${tipX.toFixed(2)} ${tipY.toFixed(2)}`;

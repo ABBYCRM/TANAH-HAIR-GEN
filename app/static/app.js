@@ -188,7 +188,7 @@ async function loadSamplePhoto() {
     showPhoto(photoBase64, photoMime);
     setPhotoStatus('sample', 'badge-blue');
   } catch (e) {
-    setPhotoStatus('no photo', 'badge-slate');
+    setPhotoStatus('noPhoto', 'badge-slate');
   }
 }
 
@@ -212,7 +212,7 @@ function clearPhoto() {
   photoEmpty.style.display = '';
   photoReset.hidden = true;
   photoInput.value = '';
-  setPhotoStatus('no photo', 'badge-slate');
+  setPhotoStatus('noPhoto', 'badge-slate');
 }
 
 function showPhoto(b64, mime) {
@@ -278,7 +278,7 @@ function renderSingle(body, ms) {
   const viewLabel = body.view || 'front';
   const meta = i18n.t('result.modelMeta', { model: modelLabel, view: viewLabel, ms: (ms/1000).toFixed(1), id: body.id });
   setResultMeta(meta, 'badge-green', null);
-  resultWrap.innerHTML = `<img class="result-image" src="${body.outputDataUrl}" alt="Generated preview"/>`;
+  resultWrap.innerHTML = `<img class="result-image" src="${body.outputDataUrl}" alt="${escapeAttr(i18n.t('result.altPreview'))}"/>`;
   // Scroll into view on mobile
   document.getElementById('output-card').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
@@ -290,9 +290,11 @@ function renderVariants(body, ms) {
   const failedLabel = i18n.t('result.failed');
   const cards = (body.variants || []).map(v => {
     if (v.error) {
-      return `<figure class="variant-card error"><div class="placeholder" style="min-height:160px"><div class="placeholder-icon">!</div><div class="placeholder-text">${escapeHtml(v.error)}</div></div><figcaption><strong>${escapeHtml(v.hairline)}</strong><span>${escapeHtml(failedLabel)}</span></figcaption></figure>`;
+      const hairLabel = i18n.presetLabel('hairlines', v.hairline) || v.hairline;
+      return `<figure class="variant-card error"><div class="placeholder" style="min-height:160px"><div class="placeholder-icon">!</div><div class="placeholder-text">${escapeHtml(v.error)}</div></div><figcaption><strong>${escapeHtml(hairLabel)}</strong><span>${escapeHtml(failedLabel)}</span></figcaption></figure>`;
     }
-    return `<figure class="variant-card"><img src="${v.outputDataUrl}" alt="${escapeHtml(v.hairline)}"/><figcaption><strong>${escapeHtml(v.hairline)}</strong><span>${(ms/1000).toFixed(1)}s</span></figcaption></figure>`;
+    const hairLabel = i18n.presetLabel('hairlines', v.hairline) || v.hairline;
+    return `<figure class="variant-card"><img src="${v.outputDataUrl}" alt="${escapeAttr(hairLabel)}"/><figcaption><strong>${escapeHtml(hairLabel)}</strong><span>${(ms/1000).toFixed(1)}s</span></figcaption></figure>`;
   }).join('');
   resultWrap.innerHTML = `<div class="variants-grid">${cards}</div>`;
   document.getElementById('output-card').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -305,9 +307,11 @@ function renderMultiView(body, ms) {
   const failedLabel = i18n.t('result.failed');
   const cards = (body.views || []).map(v => {
     if (v.error) {
-      return `<figure class="variant-card error"><div class="placeholder" style="min-height:160px"><div class="placeholder-icon">!</div><div class="placeholder-text">${escapeHtml(v.error)}</div></div><figcaption><strong>${escapeHtml((v.view||'').toUpperCase())}</strong><span>${escapeHtml(failedLabel)}</span></figcaption></figure>`;
+      const viewLabel = i18n.presetLabel('views', v.view) || (v.view || '').toUpperCase();
+      return `<figure class="variant-card error"><div class="placeholder" style="min-height:160px"><div class="placeholder-icon">!</div><div class="placeholder-text">${escapeHtml(v.error)}</div></div><figcaption><strong>${escapeHtml(viewLabel)}</strong><span>${escapeHtml(failedLabel)}</span></figcaption></figure>`;
     }
-    return `<figure class="variant-card"><img src="${v.outputDataUrl}" alt="${escapeHtml(v.view)}"/><figcaption><strong>${escapeHtml((v.view||'').toUpperCase())}</strong><span>${escapeHtml(v.model || 'gemini')}</span></figcaption></figure>`;
+    const viewLabel = i18n.presetLabel('views', v.view) || (v.view || '').toUpperCase();
+    return `<figure class="variant-card"><img src="${v.outputDataUrl}" alt="${escapeAttr(viewLabel)}"/><figcaption><strong>${escapeHtml(viewLabel)}</strong><span>${escapeHtml(v.model || 'gemini')}</span></figcaption></figure>`;
   }).join('');
   resultWrap.innerHTML = `<div class="multi-view-grid">${cards}</div>`;
   document.getElementById('output-card').scrollIntoView({ behavior: 'smooth', block: 'nearest' });

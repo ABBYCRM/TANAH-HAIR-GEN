@@ -4,7 +4,6 @@ node_modules
 *.log
 coverage
 .env*
-tests
 README.md
 .dockerignore
 Dockerfile
