@@ -67,7 +67,7 @@
     <div class="grid grid-3">
 
       <!-- INPUT CARD -->
-      <section class="card" id="input-card">
+      <section class="card" id="input-card" style="--i:0">
         <div class="card-head">
           <h2 data-i18n="card.patientPhoto">Patient photo</h2>
           <span class="badge badge-slate" id="photo-status" data-i18n="photo.noPhoto">no photo</span>
@@ -97,7 +97,7 @@
       </section>
 
       <!-- PARAMETERS CARD -->
-      <section class="card" id="params-card">
+      <section class="card" id="params-card" style="--i:1">
         <div class="card-head">
           <h2 data-i18n="card.parameters">Parameters</h2>
           <span class="badge badge-slate" id="params-count" data-i18n="card.fieldsCount" data-i18n-params='{"n":10}'>10 fields</span>
@@ -169,7 +169,7 @@
       </section>
 
       <!-- OUTPUT CARD -->
-      <section class="card" id="output-card">
+      <section class="card card--result" id="output-card" style="--i:2">
         <div class="card-head">
           <h2 data-i18n="card.result">Result</h2>
           <span class="badge badge-slate" id="result-meta" data-i18n="result.noRender">no render yet</span>
@@ -186,7 +186,7 @@
     </div>
 
     <!-- API for CRM integrators (full-width card, like CLINICA-TANAH dashboard tables) -->
-    <section class="card" id="api-card">
+    <section class="card" id="api-card" style="--i:3">
       <div class="card-head">
         <h2 data-i18n="card.apiIntegrators">API for CRM integrators</h2>
         <div class="endpoint-row">
